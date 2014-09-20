@@ -1,26 +1,14 @@
-// start slingin' some d3 here.
-//
-//Create and render game board
-//Create an enemy constructor
-  //Create a movement function
-    //randomly set new position for enemy
-    //call render function to reset position
-    //transition to new position
-//Create a player constructor
-  //Create draggable functionality
-  //Create method to check for collisions with enemies
-//Create and implement scoreboard
-  //Trigger from player collision method
-
-
-//Board property
-  //Width, height, #of enemies, # of players
 var gameOptions = {
   width: 700,
   height: 500,
   padding: 10,
   enemyCount: 30,
-  playerCount: 1
+  playerCount: 1,
+  currentLevelColor: 'lightgray',
+  currentEnemyColor: 'black',
+  levelColors: ['lightgray', 'pink', 'burlywood', 'honeydew', 'linen', 'papayawhip'],
+  enemyColors: ['seagreen', 'indigo', 'slategray', 'peru', 'maroon', 'darkgoldenrod'],
+  level: 1
 };
 
 var gameBoard = d3.select('.game-board').append('svg:svg').attr('width', gameOptions.width)
@@ -51,7 +39,7 @@ Player.prototype.render = function(location){
   this.y = this.gameOptions.height*0.5;
   this.element = location.append('svg:circle').attr('r', this.r).attr('fill', this.fill)
     .attr('angle', this.angle).attr('cx', this.x).attr('cy', this.y);
-
+  // this.element = location.append('svg:path').attr('d', 'm317,174l-80,91l139,29l63,-92l-122,-28z').attr('fill', '#0f0').attr('cx', this.x).attr('cy', this.y);
   this.dragging();
 };
 
@@ -82,7 +70,7 @@ Player.prototype.dragging = function(){
 };
 
 Player.prototype.growMe = function() {
-  player.r *= 1.02;
+  player.r *= 1.2;
   player.element.transition().duration(500).attr('r', player.r);
 };
 
@@ -129,6 +117,10 @@ var resetScore = function() {
   scoreBoard.collisions++;
   scoreBoard.currentScore = 0;
   d3.select('.collisions span').text(scoreBoard.collisions);
+  gameBoard.style('background-color', '#aaa');
+  gameOptions.level = 1;
+  gameOptions.enemyCount = 30;
+  d3.select('.level span').text('Level: ' + gameOptions.level);
 };
 
 var render = function(arrayOfEnemies) {
@@ -136,7 +128,8 @@ var render = function(arrayOfEnemies) {
   enemies.enter().append('svg:circle').attr('class','enemy')
       .attr('cx', function(enemy) { return axes.x(enemy.x)})
       .attr('cy', function(enemy) { return axes.y(enemy.y)})
-      .attr('r', 10);
+      .attr('r', 0).attr('fill', gameOptions.currentEnemyColor);
+  enemies.exit().remove();
 
   var tweenWithCollisionDetection = function(newEnemyData){
     var currentEnemy = d3.select(this);
@@ -161,7 +154,7 @@ var render = function(arrayOfEnemies) {
       currentEnemy.attr('cx', nextPosition.x)
       .attr('cy', nextPosition.y);};
   };
-  enemies.transition().duration(2000).tween('custom', tweenWithCollisionDetection);
+  enemies.transition().duration(200).attr('r', 10).transition().duration(2000).tween('custom', tweenWithCollisionDetection);
 };
 
 var playGame = function() {
@@ -177,8 +170,16 @@ var playGame = function() {
   }, 2000);
   var scoreInterval = setInterval(function(){
     scoreBoard.currentScore++;
-    if (scoreBoard.currentScore % 100) {
+    if (scoreBoard.currentScore % 50 === 0) {
       player.growMe();
+    }
+    if (scoreBoard.currentScore % 100 === 0) {
+      gameOptions.currentLevelColor = gameOptions.levelColors[Math.floor(Math.random() * 6)];
+      gameBoard.style('background-color', 'white');
+      gameBoard.transition().duration(400).style('background-color', gameOptions.currentLevelColor);
+      gameOptions.level++;
+      gameOptions.enemyCount += 5;
+      d3.select('.level span').text('Level: ' + gameOptions.level);
     }
     // call grow method
     d3.select('.current span').text(scoreBoard.currentScore);
