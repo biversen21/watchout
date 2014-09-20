@@ -18,12 +18,20 @@
 var gameOptions = {
   width: 700,
   height: 500,
+  padding: 10,
   enemyCount: 30,
   playerCount: 1
 };
 
-var gameBoard = d3.select('.game-board').append('svg:svg').attr('width', gameOptions.width).attr('height', gameOptions.height);
+var gameBoard = d3.select('.game-board').append('svg:svg').attr('width', gameOptions.width)
+  .attr('height', gameOptions.height);
 
+//need to set and update scoreboard
+var scoreBoard = {
+  highScore: 0,
+  currentScore: 0,
+  collisions: 0
+};
 
 var axes = {
   x: d3.scale.linear().domain([0,100]).range([0,gameOptions.width]),
@@ -39,11 +47,7 @@ var Player = function(gameOptions) {
   this.r = 10;
 };
 
-var that;
-
 Player.prototype.render = function(location){
-  // console.log(this);
-  that = this;
   this.x = this.gameOptions.width*0.5;
   this.y = this.gameOptions.height*0.5;
   this.element = location.append('svg:circle').attr('r', this.r).attr('fill', this.fill)
@@ -57,13 +61,21 @@ Player.prototype.transform = function(options){
 };
 
 Player.prototype.moveRelative = function(dx, dy){
-  // this.transform = {
-  console.log(that);
-  that.x = that.x + dx;
-  that.y = that.y + dy;
-  console.log(that.x);
-  // };
-  that.element.attr('cx', that.x).attr('cy', that.y);
+  if (player.x < gameOptions.padding) {
+    player.x = gameOptions.padding;
+  } else if (player.x > gameOptions.width - gameOptions.padding) {
+    player.x = gameOptions.width - gameOptions.padding;
+  } else {
+    player.x = player.x + dx;
+  }
+  if (player.y < gameOptions.padding) {
+    player.y = gameOptions.padding;
+  } else if (player.y > gameOptions.height - gameOptions.padding) {
+    player.y = gameOptions.height - gameOptions.padding;
+  } else {
+    player.y = player.y + dy;
+  }
+  player.element.attr('cx', player.x).attr('cy', player.y);
 };
 
 Player.prototype.dragging = function(){
@@ -88,10 +100,30 @@ var createEnemies = function(){
       x: Math.random() * 100,
       y: Math.random() * 100
     };
-    // console.log(enemy);
     return enemy;
   });
   return arrayOfEnemies;
+};
+
+//need to build collission detection
+var detectCollision = function(enemy, colliderCallback) {
+  var xDiff = parseFloat(enemy.attr('cx')) - player.x;
+  var yDiff = parseFloat(enemy.attr('cy')) - player.y;
+  var rDiff = parseFloat(enemy.attr('r')) + player.r;
+  var distance = Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2));
+  if (distance < rDiff) {
+    colliderCallback();
+  }
+};
+
+var resetScore = function() {
+  if (scoreBoard.currentScore > scoreBoard.highScore) {
+    scoreBoard.highScore = scoreBoard.currentScore;
+    d3.select('.high span').text(scoreBoard.highScore);
+  }
+  scoreBoard.collisions++;
+  scoreBoard.currentScore = 0;
+  d3.select('.collisions span').text(scoreBoard.collisions);
 };
 
 var render = function(arrayOfEnemies) {
@@ -115,7 +147,7 @@ var render = function(arrayOfEnemies) {
     };
 
     return function(t) {
-
+      detectCollision(currentEnemy, resetScore);
       var nextPosition = {
         x: startPosition.x + (endPosition.x - startPosition.x)*t,
         y: startPosition.y + (endPosition.y - startPosition.y)*t
@@ -128,19 +160,20 @@ var render = function(arrayOfEnemies) {
 };
 
 var playGame = function() {
-  // create and render function
   var setEnemyLocations = function() {
     var newEnemyLocations = createEnemies();
     render(newEnemyLocations);
   };
   setEnemyLocations();
-  // setinterval function that fires above function
   var count=0;
   var movementInterval = setInterval(function(){
     setEnemyLocations();
     count++;
-    // console.log(count);
   }, 2000);
+  var scoreInterval = setInterval(function(){
+    scoreBoard.currentScore++;
+    d3.select('.current span').text(scoreBoard.currentScore);
+  }, 50);
 };
 
 playGame();
