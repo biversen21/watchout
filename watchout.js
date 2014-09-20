@@ -30,6 +30,54 @@ var axes = {
   y: d3.scale.linear().domain([0,100]).range([0,gameOptions.height])
 };
 
+var Player = function(gameOptions) {
+  this.gameOptions = gameOptions;
+  this.x = 0;
+  this.y = 0;
+  this.fill = '#f00';
+  this.angle = 0;
+  this.r = 10;
+};
+
+var that;
+
+Player.prototype.render = function(location){
+  // console.log(this);
+  that = this;
+  this.x = this.gameOptions.width*0.5;
+  this.y = this.gameOptions.height*0.5;
+  this.element = location.append('svg:circle').attr('r', this.r).attr('fill', this.fill)
+    .attr('angle', this.angle).attr('cx', this.x).attr('cy', this.y);
+
+  this.dragging();
+};
+
+Player.prototype.transform = function(options){
+  this.element.attr('transform', "translate(#{this.x}, #{this.y})");
+};
+
+Player.prototype.moveRelative = function(dx, dy){
+  // this.transform = {
+  console.log(that);
+  that.x = that.x + dx;
+  that.y = that.y + dy;
+  console.log(that.x);
+  // };
+  that.element.attr('cx', that.x).attr('cy', that.y);
+};
+
+Player.prototype.dragging = function(){
+  var dragMove = function(){
+    Player.prototype.moveRelative(d3.event.dx, d3.event.dy);
+  };
+  var drag = d3.behavior.drag().on('drag', dragMove);
+  this.element.call(drag);
+};
+
+var player = new Player(gameOptions);
+player.render(gameBoard);
+
+
 var createEnemies = function(){
   var count = 0;
   var arrayOfEnemies = Array.apply(null, Array(gameOptions.enemyCount));
