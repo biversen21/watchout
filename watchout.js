@@ -26,7 +26,6 @@ var gameOptions = {
 var gameBoard = d3.select('.game-board').append('svg:svg').attr('width', gameOptions.width)
   .attr('height', gameOptions.height);
 
-//need to set and update scoreboard
 var scoreBoard = {
   highScore: 0,
   currentScore: 0,
@@ -56,10 +55,6 @@ Player.prototype.render = function(location){
   this.dragging();
 };
 
-Player.prototype.transform = function(options){
-  this.element.attr('transform', "translate(#{this.x}, #{this.y})");
-};
-
 Player.prototype.moveRelative = function(dx, dy){
   if (player.x < gameOptions.padding) {
     player.x = gameOptions.padding;
@@ -86,6 +81,16 @@ Player.prototype.dragging = function(){
   this.element.call(drag);
 };
 
+Player.prototype.growMe = function() {
+  player.r *= 1.02;
+  player.element.transition().duration(500).attr('r', player.r);
+};
+
+Player.prototype.shrinkMe = function() {
+  player.r = 10;
+  player.element.transition().duration(1).attr('r', player.r);
+};
+
 var player = new Player(gameOptions);
 player.render(gameBoard);
 
@@ -105,11 +110,10 @@ var createEnemies = function(){
   return arrayOfEnemies;
 };
 
-//need to build collission detection
 var detectCollision = function(enemy, colliderCallback) {
   var xDiff = parseFloat(enemy.attr('cx')) - player.x;
   var yDiff = parseFloat(enemy.attr('cy')) - player.y;
-  var rDiff = parseFloat(enemy.attr('r')) + player.r;
+  var rDiff = parseFloat(enemy.attr('r')) + parseFloat(player.element.attr('r'));
   var distance = Math.sqrt(Math.pow(xDiff, 2) + Math.pow(yDiff, 2));
   if (distance < rDiff) {
     colliderCallback();
@@ -121,6 +125,7 @@ var resetScore = function() {
     scoreBoard.highScore = scoreBoard.currentScore;
     d3.select('.high span').text(scoreBoard.highScore);
   }
+  player.shrinkMe();
   scoreBoard.collisions++;
   scoreBoard.currentScore = 0;
   d3.select('.collisions span').text(scoreBoard.collisions);
@@ -172,6 +177,10 @@ var playGame = function() {
   }, 2000);
   var scoreInterval = setInterval(function(){
     scoreBoard.currentScore++;
+    if (scoreBoard.currentScore % 100) {
+      player.growMe();
+    }
+    // call grow method
     d3.select('.current span').text(scoreBoard.currentScore);
   }, 50);
 };
