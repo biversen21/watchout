@@ -40,6 +40,7 @@ var createEnemies = function(){
       x: Math.random() * 100,
       y: Math.random() * 100
     };
+    // console.log(enemy);
     return enemy;
   });
   return arrayOfEnemies;
@@ -50,11 +51,51 @@ var render = function(arrayOfEnemies) {
   enemies.enter().append('svg:circle').attr('class','enemy')
       .attr('cx', function(enemy) { return axes.x(enemy.x)})
       .attr('cy', function(enemy) { return axes.y(enemy.y)})
-      .attr('r', 20);
+      .attr('r', 10);
+
+  var tweenWithCollisionDetection = function(newEnemyData){
+    var currentEnemy = d3.select(this);
+
+    var startPosition = {
+      x: parseFloat(currentEnemy.attr('cx')),
+      y: parseFloat(currentEnemy.attr('cy'))
+    };
+
+    var endPosition = {
+      x: axes.x(newEnemyData.x),
+      y: axes.y(newEnemyData.y)
+    };
+
+    return function(t) {
+
+      var nextPosition = {
+        x: startPosition.x + (endPosition.x - startPosition.x)*t,
+        y: startPosition.y + (endPosition.y - startPosition.y)*t
+      };
+
+      currentEnemy.attr('cx', nextPosition.x)
+      .attr('cy', nextPosition.y);};
+  };
+  enemies.transition().duration(2000).tween('custom', tweenWithCollisionDetection);
 };
 
-var test = createEnemies;
-render(test);
+var playGame = function() {
+  // create and render function
+  var setEnemyLocations = function() {
+    var newEnemyLocations = createEnemies();
+    render(newEnemyLocations);
+  };
+  setEnemyLocations();
+  // setinterval function that fires above function
+  var count=0;
+  var movementInterval = setInterval(function(){
+    setEnemyLocations();
+    count++;
+    // console.log(count);
+  }, 2000);
+};
+
+playGame();
 
 
 
