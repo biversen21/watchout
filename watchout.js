@@ -1,6 +1,6 @@
 var gameOptions = {
-  width: 700,
-  height: 500,
+  width: 900,
+  height: 600,
   padding: 10,
   enemyCount: 30,
   playerCount: 1,
@@ -179,6 +179,7 @@ var playGame = function() {
       gameBoard.transition().duration(400).style('background-color', gameOptions.currentLevelColor);
       gameOptions.level++;
       gameOptions.enemyCount += 5;
+      gameOptions.currentEnemyColor = gameOptions.enemyColors[Math.floor(Math.random() * 6)];
       d3.select('.level span').text('Level: ' + gameOptions.level);
     }
     // call grow method
